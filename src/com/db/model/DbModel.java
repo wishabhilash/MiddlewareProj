@@ -1,8 +1,8 @@
 package com.db.model;
 
+import java.io.PrintWriter;
 import java.sql.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 
 public abstract class DbModel {
@@ -50,14 +50,7 @@ public abstract class DbModel {
 		
 		query += " " + params + " " + args + ";";
 		System.out.println(query);
-		try{
-			stm = getConn().createStatement();
-			stm.executeUpdate(query);
-			return true;
-		}catch(SQLException e){
-			e.printStackTrace();
-			return false;
-		}
+		return executeCode(query, true);
 	}
 	
 	public boolean update(LinkedHashMap<String, String> fieldData, LinkedHashMap<String, String> whereData){
@@ -106,15 +99,7 @@ public abstract class DbModel {
 		
 		query += fields + " " + wheres + ";";
 		System.out.println(query);
-		try{
-			stm = getConn().createStatement();
-			stm.executeUpdate(query);
-			return true;
-		}catch(SQLException e){
-			e.printStackTrace();
-			return false;
-		}
-		
+		return executeCode(query, true);		
 	}
 	
 	public boolean delete(LinkedHashMap<String, String> data){
@@ -144,6 +129,100 @@ public abstract class DbModel {
 		query += " " + wheres  + ";";
 		System.out.println(query);
 //		return false;
+		return executeCode(query, true);
+	}
+	
+	public Vector<LinkedHashMap<String, String>> select(LinkedHashMap<String, String> fieldData, LinkedHashMap<String, String> whereData, String condition){
+		String query = "SELECT ";
+		String fields = "", wheres = "FROM " + getTableName() + " WHERE ";
+		int fieldLen = fieldData.size(), whereLen = whereData.size(), countF = 0;
+		String keySet[] = new String[fieldLen];
+		
+		//	Generate field
+		for(Map.Entry<String, String> entry : fieldData.entrySet()){
+			countF++;
+			String param = entry.getKey();
+			String arg = entry.getValue();
+			
+			//	Add params and args
+			if(param.startsWith("s-")){
+				String paramSplit[] = param.split("-");
+				fields += paramSplit[1];
+				keySet[countF-1] = paramSplit[1];
+			}else{
+				fields += param;
+				keySet[countF-1] = param;
+			}
+			
+			if(countF < fieldLen){
+				fields += ",";
+			}
+		}
+		
+		int countW = 0;
+		//	Generate where
+		for(Map.Entry<String, String> entry : whereData.entrySet()){
+			countW++;
+			String param = entry.getKey();
+			String arg = entry.getValue();
+			
+			//	Add params and args
+			if(param.startsWith("s-")){
+				String paramSplit[] = param.split("-");
+				wheres += paramSplit[1] + "=" + "\"" + arg + "\"";
+			}else{
+				wheres += param + "=" + arg;
+			}
+			
+			if(countW < whereLen){
+				wheres += " " + condition + " ";
+			}
+		}
+		
+		query += fields + " " + wheres + ";";
+		System.out.println(query);
+
+		// Transact with DB
+		Vector<LinkedHashMap<String, String>> vec = new Vector<LinkedHashMap<String,String>>();
+		try{
+			stm = getConn().createStatement();
+			resSet = stm.executeQuery(query);
+			int count = 0;
+			
+			
+			
+			while(resSet.next()){
+				LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+				map.put(keySet[count], resSet.getString(keySet[count]));
+				vec.add(map);
+			}
+		}catch(SQLException e){
+			e.printStackTrace();
+		}
+
+		return vec;
+	}
+	
+	
+	//	Raw update execution like: UPDATE, DELETE, INSERT
+	public void genericUpdate(String query){
+		try{
+			stm = getConn().createStatement();
+			stm.executeUpdate(query);
+		}catch(SQLException e){
+			e.printStackTrace();
+		}
+	}
+
+	//	Raw query execution like: SELECT	
+	public ResultSet genericQuery(String query) throws Exception{
+		stm = getConn().createStatement();
+		return stm.executeQuery(query);
+	}
+	
+	
+	// Generic code to execute queries
+	protected boolean executeCode(String query, boolean flag){
 		try{
 			stm = getConn().createStatement();
 			stm.executeUpdate(query);
@@ -151,25 +230,6 @@ public abstract class DbModel {
 		}catch(SQLException e){
 			e.printStackTrace();
 			return false;
-		}
-	}
-	
-	
-	public void genericQuery(String query){
-		try{
-			stm = getConn().createStatement();
-			resSet = stm.executeQuery(query);
-		}catch(SQLException e){
-			e.printStackTrace();
-		}
-	}
-	
-	public void select(String query){
-		try{
-			stm = getConn().createStatement();
-			resSet = stm.executeQuery(query);
-		}catch(SQLException e){
-			e.printStackTrace();
 		}
 	}
 }

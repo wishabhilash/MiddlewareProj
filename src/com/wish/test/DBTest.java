@@ -1,7 +1,8 @@
 package com.wish.test;
 
 import com.db.model.*;
-import com.wish.model.BookMaster;
+import com.library.model.BookMaster;
+
 import java.util.*;
 
 public class DBTest{
@@ -14,7 +15,8 @@ public class DBTest{
 		LinkedHashMap<String, String> wheres = new LinkedHashMap<String, String>();
 		wheres.put("copies", "10");
 		wheres.put("price", "45.5");
-		bm.update(fields,wheres);
+		Vector<LinkedHashMap<String, String>> vec = bm.select(fields,wheres, "OR");
+		System.out.println(vec.size());
 	}
 }
 

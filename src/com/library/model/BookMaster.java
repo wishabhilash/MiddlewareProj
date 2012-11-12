@@ -1,15 +1,15 @@
-package com.wish.model;
+package com.library.model;
 
 import com.db.model.DBConnect;
 import com.db.model.DbModel;
 
 import java.sql.*;
-import java.util.LinkedHashMap;
 
 
 public class BookMaster extends DbModel{
 	
 	/*	Follow the pattern below while passing arguments for insert
+	 * 	keys preceeded by "s-" mean that they are String variables for database
 	 * 
 	 * LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
 		map.put("book_id", "");
